@@ -1,28 +1,52 @@
 #define MAX_LENGTH 10
+#define MCP23S17_SSPIN 9
+
+#define ERROR_LAMP 7
 #define BELL 8
 #define BZ21 13
 
 #include <Metro.h>
+#include <Spi.h>
+#include <Mcp23s17.h>     // https://github.com/dreamcat4/Mcp23s17
+
+MCP23S17 ioic_0 = MCP23S17( MCP23S17_SSPIN, 0x0 );
+/***************************************************
+ *                    __________  ____________ 
+ *   ATS-Sx Power ( 9)  1     B0     A7     28  ( 8) (C:10uF + R:4k)-> ding
+ *  ATS-SX Active (10)  2     B1     A6     27  ( 7) 
+ *    ATS-Sx Bell (11)  3     B2     A5     26  ( 6) ATS-P Cutoff
+ * ATS-Sx BZ21Cut (12)  4  i  B3     A4  i  25  ( 5) ATS-P Active
+ *                (13)  5  /  B4     A3  /  24  ( 4) ATS-P Purge
+ *                (14)  6  o  B5     A2  o  23  ( 3) ATS-P Braking
+ *                (15)  7     B6     A1     22  ( 2) ATS-P Pattern
+ *                (16)  8 ___ B7     A0 ___ 21  ( 1) ATS-P Power
+ *                      9     V+   intA     20  
+ *                     10     GND  intB     19  
+ *                     11     SS    RST     18  
+ *                     12     CLK    A2     17  
+ *                     13     SI     A1     16  
+ *                     14     SO     A0     15  
+ *                     ￣￣￣￣￣￣￣￣￣￣￣￣￣￣ 
+ ***************************************************/
 
 Metro ding = Metro(25);
 Metro bz21 = Metro(250);
 
 void setup() {
-  // ピン出力設定
-  for (int i=2; i<=13; i++)
-  {
-    pinMode(i, OUTPUT);
-    digitalWrite(i, LOW);
-  }
-  pinMode(12, OUTPUT);
-  digitalWrite(12, HIGH);  // DC100V系統は負論理制御のため
+  // MCP23S17 init
+  ioic_0.pinMode(OUTPUT);
+
+  // all port pulldown to LOW
+  ioic_0.port(0x00);
+
+  ioic_0.digitalWrite(11, HIGH);  // DC100V系統は負論理制御のため
 
   // シリアル通信準備
   Serial.begin(115200);
 
   // プラグインとのハンドシェイク
   while (1) {
-    digitalWrite(7, HIGH);
+    ioic_0.digitalWrite(ERROR_LAMP, HIGH);
 
     Serial.println("1");
     if (Serial.available())
@@ -31,12 +55,12 @@ void setup() {
       if (temp == '0') { break; }
     }
     delay(500);
-    digitalWrite(7, LOW);
+    ioic_0.digitalWrite(ERROR_LAMP, LOW);
     delay(500);
   }
   
   while (Serial.read() != -1) ;
-  digitalWrite(7, LOW);
+  ioic_0.digitalWrite(ERROR_LAMP, LOW);
   
   Serial.println("1");
 }
@@ -83,10 +107,10 @@ void put_signal(int pin, int sig)
   {
     if (sig == 0)
     {
-      digitalWrite(pin, HIGH);       // ATS-Sx 警報ベル鳴動
+      ioic_0.digitalWrite(pin, HIGH);       // ATS-Sx 警報ベル鳴動
       flash_down(BZ21);              // ATS-Sx BZ21警報器回路開通
     }
-    else { digitalWrite(pin, LOW); } // ATS-Sx 警報ベル停止
+    else { ioic_0.digitalWrite(pin, LOW); } // ATS-Sx 警報ベル停止
   }
 
   /** ATC/S-P 単打ベル,表示器 BZ21警報器回路 制御 **/
@@ -98,8 +122,8 @@ void put_signal(int pin, int sig)
     // その他機器制御
     else
     {
-      if (sig == 0) { digitalWrite(pin, LOW); }
-      else { digitalWrite(pin, HIGH); }
+      if (sig == 0) { ioic_0.digitalWrite(pin, LOW); }
+      else { ioic_0.digitalWrite(pin, HIGH); }
     }
   }
 
@@ -107,20 +131,20 @@ void put_signal(int pin, int sig)
   else
   {
     Serial.println("Opps!");
-    digitalWrite(7, HIGH);
+    ioic_0.digitalWrite(ERROR_LAMP, HIGH);
   }
   
 }
 
 void flash_up(int pin)
 {
-  digitalWrite(pin, LOW);             // 継続動作防止
-  digitalWrite(pin, HIGH);
+  ioic_0.digitalWrite(pin, LOW);             // 継続動作防止
+  ioic_0.digitalWrite(pin, HIGH);
   if (pin == BELL) { ding.reset(); }  // 電源カットタイマーリセット
   else { bz21.reset(); }              // 回路復帰タイマーリセット
 }
 
 void flash_down(int pin)
 {
-  digitalWrite(pin, LOW);
+  ioic_0.digitalWrite(pin, LOW);
 }
