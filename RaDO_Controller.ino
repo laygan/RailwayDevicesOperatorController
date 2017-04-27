@@ -10,7 +10,7 @@
 #include <Mcp23s17.h>     // https://github.com/dreamcat4/Mcp23s17
 
 MCP23S17 ioic_0 = MCP23S17( MCP23S17_SSPIN, 0x0 );
-/***************************************************
+/**************************************************************************************
  *                    __________  ____________ 
  *   ATS-Sx Power ( 9)  1     B0     A7     28  ( 8) (C:10uF + R:4k)-> ding
  *  ATS-SX Active (10)  2     B1     A6     27  ( 7) 
@@ -27,7 +27,25 @@ MCP23S17 ioic_0 = MCP23S17( MCP23S17_SSPIN, 0x0 );
  *                     13     SI     A1     16  
  *                     14     SO     A0     15  
  *                     ￣￣￣￣￣￣￣￣￣￣￣￣￣￣ 
- ***************************************************/
+ **************************************************************************************/
+
+const int pinMatrix[] = 
+  {
+    ERROR_LAMP,    // arduinoPin 0
+    ERROR_LAMP,    // arduinoPin 1
+    1,             // arduinoPin 2
+    2,             // arduinoPin 3
+    3,             // arduinoPin 4
+    4,             // arduinoPin 5
+    5,             // arduinoPin 6
+    6,             // arduinoPin 7
+    8,             // arduinoPin 8
+    9,             // arduinoPin 9
+    10,            // arduinoPin 10
+    ERROR_LAMP,    // arduinoPin 11
+    11,            // arduinoPin 12
+    12             // arduinoPin 13
+  };
 
 Metro ding = Metro(25);
 Metro bz21 = Metro(250);
@@ -90,14 +108,14 @@ void parse_signal()
   } while (str[p-1] != '\n');
   str[p-1] = '\0';
 
-  const int port = atoi(strtok(str, "," ));
+  const int index = atoi(strtok(str, "," ));
   const int value = atoi(strtok(NULL, "," ));
 
   // 機器操作
-  put_signal(port, value);
+  put_signal(pinMatrix[index], value);
 
   // アンサーバック
-  Serial.println(String(port)+","+String(value));
+  Serial.println(String(index)+","+String(value));
 }
 
 void put_signal(int pin, int sig)
