@@ -1,9 +1,9 @@
 #define MAX_LENGTH 10
 #define MCP23S17_SSPIN 9
 
-#define ERROR_LAMP 7
+#define ERROR_LAMP 6
 #define BELL 8
-#define BZ21 13
+#define BZ21 12
 
 #include <Metro.h>
 #include <Spi.h>
@@ -14,7 +14,7 @@ MCP23S17 ioic_0 = MCP23S17( MCP23S17_SSPIN, 0x0 );
  *                    __________  ____________ 
  *   ATS-Sx Power ( 9)  1     B0     A7     28  ( 8) (C:10uF + R:4k)-> ding
  *  ATS-SX Active (10)  2     B1     A6     27  ( 7) 
- *    ATS-Sx Bell (11)  3     B2     A5     26  ( 6) ATS-P Cutoff
+ *    ATS-Sx Bell (11)  3     B2     A5     26  ( 6) ATS-P Fail
  * ATS-Sx BZ21Cut (12)  4  i  B3     A4  i  25  ( 5) ATS-P Active
  *                (13)  5  /  B4     A3  /  24  ( 4) ATS-P Purge
  *                (14)  6  o  B5     A2  o  23  ( 3) ATS-P Braking
